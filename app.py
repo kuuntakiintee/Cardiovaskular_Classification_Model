@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import pickle
 
-st.set_page_config("wide")
+st.set_page_config("Cardiovascular Classification")
 
 def load_model(): 
     with open("FINAL_MODEL_CARDIO.pkl", 'rb') as file:
