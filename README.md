@@ -1,0 +1,2 @@
+# Cardiovaskular_Classification_Model
+Model untuk klasifikasi penyakit kardiovaskular menggunakan machine learning
