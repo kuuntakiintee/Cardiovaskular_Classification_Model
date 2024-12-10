@@ -3,7 +3,6 @@ import numpy as np
 import pickle
 import datetime as datetime
 import matplotlib.pyplot as plt
-import sklearn._loss._loss
 
 st.set_page_config(page_title="CardioVascular Risk Prediction", layout="wide")
 
