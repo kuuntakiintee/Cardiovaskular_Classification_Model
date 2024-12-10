@@ -1,38 +1,24 @@
 import streamlit as st
 import numpy as np
 import pickle
-import os
-import datetime
+import datetime as datetime
 import matplotlib.pyplot as plt
 
-# Konfigurasi aplikasi Streamlit
 st.set_page_config(page_title="CardioVascular Risk Prediction", layout="wide")
 
-# Fungsi untuk memuat model
 def load_model(): 
-    model_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "FINAL_MODEL_CARDIO.pkl")
-    if not os.path.exists(model_path):
-        st.error("Model file not found. Please upload FINAL_MODEL_CARDIO.pkl.")
-        st.stop()
-    with open(model_path, 'rb') as file:
+    with open("FINAL_MODEL_CARDIO.pkl", 'rb') as file:
         loaded_model = pickle.load(file)
     return loaded_model
 
-# Fungsi untuk memuat scaler
 def load_scale(): 
-    scaler_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "SCALED.pkl")
-    if not os.path.exists(scaler_path):
-        st.error("Scaler file not found. Please upload SCALED.pkl.")
-        st.stop()
-    with open(scaler_path, 'rb') as file:
+    with open("SCALED.pkl", 'rb') as file:
         scale = pickle.load(file)
     return scale
 
-# Muat model dan scaler
 model = load_model()
 scale = load_scale()
 
-# Header aplikasi
 st.title(":red[CardioVascular Risk Classification]")
 
 st.markdown(""" 
@@ -43,13 +29,13 @@ st.markdown("""
 st.markdown("---")
 st.header("Enter your details")
 
-# Form input
 with st.form(key="input_form"):
     birth_date = st.date_input("Birth Date", max_value=datetime.date.today())
     today = datetime.date.today()
     age_in_days = (today - birth_date).days
     age_in_years = age_in_days // 365
     st.write(f"Age: {age_in_years} years")
+    st.write(f"Age: {age_in_days} days")
     
     age = age_in_days
     gender = st.selectbox("Gender", options=[0, 1], format_func=lambda x: 'Male' if x == 1 else 'Female')
@@ -66,61 +52,49 @@ with st.form(key="input_form"):
     submit_button = st.form_submit_button(label="Predict Risk")
 
 if submit_button:
-    # Input data
-    input_data = np.array([[age, gender, height, weight, ap_hi, ap_lo, cholesterol, gluc, smoke, alco, active]])
-    
-    try:
-        # Transform data
-        input_data_scaled = scale.transform(input_data)
-        prediction = model.predict(input_data_scaled)
-        
-        # Hasil prediksi
-        if prediction[0] == 1:
-            st.error("**Prediction Result**: You are at a higher risk of cardiovascular disease.")
-            st.markdown("### What this means:")
-            st.write("A higher risk of cardiovascular disease could mean the presence of conditions like hypertension or high cholesterol.")
-        else:
-            st.success("**Prediction Result**: You are at a lower risk of cardiovascular disease.")
-            st.markdown("### What this means:")
-            st.write("A lower risk suggests that your health factors are within a generally healthy range.")
+    input_data = np.array(scale.transform([[age_in_days, gender, height, weight, ap_hi, ap_lo, cholesterol, gluc, smoke, alco, active]]))
+    prediction = model.predict(input_data)
 
-        # BMI Calculation
-        bmi = weight / (height / 100) ** 2
-        st.write(f"Your BMI: {bmi:.2f}")
-        if bmi < 18.5:
-            st.warning("You are underweight.")
-        elif 18.5 <= bmi < 24.9:
-            st.success("Your weight is in the normal range.")
-        elif 25 <= bmi < 29.9:
-            st.warning("You are overweight.")
-        else:
-            st.error("You are obese.")
+    if prediction[0] == 1:
+        st.error("**Prediction Result**: You are at a higher risk of cardiovascular disease.")
+        st.markdown("### What this means:")
+        st.write("A higher risk of cardiovascular disease could mean the presence of conditions like hypertension or high cholesterol.")
+    else:
+        st.success("**Prediction Result**: You are at a lower risk of cardiovascular disease.")
+        st.markdown("### What this means:")
+        st.write("A lower risk suggests that your health factors are within a generally healthy range.")
 
-        # Health Tips
-        st.markdown("### Health Tips:")
-        if cholesterol == 3:
-            st.write("- Reduce intake of high-cholesterol foods.")
-        if ap_hi > 130:
-            st.write("- Manage your blood pressure with diet and exercise.")
-        if smoke == 1:
-            st.write("- Quitting smoking can reduce your cardiovascular risk.")
-        if not active:
-            st.write("- Regular exercise can improve cardiovascular health.")
+    bmi = weight / (height / 100) ** 2
+    st.write(f"Your BMI: {bmi:.2f}")
+    if bmi < 18.5:
+        st.warning("You are underweight.")
+    elif 18.5 <= bmi < 24.9:
+        st.success("Your weight is in the normal range.")
+    elif 25 <= bmi < 29.9:
+        st.warning("You are overweight.")
+    else:
+        st.error("You are obese.")
 
-        # Blood Pressure Visualization
-        st.markdown("### Blood Pressure Visualization")
-        fig, ax = plt.subplots(figsize=(6, 4))  # Smaller figure size
-        ax.bar(["Systolic (ap_hi)", "Diastolic (ap_lo)"], [ap_hi, ap_lo], color=["red", "blue"])
-        ax.set_ylabel("Pressure (mmHg)")
-        ax.set_title("Blood Pressure")
-        st.pyplot(fig)
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+    st.markdown("### Health Tips:")
+    if cholesterol == 3:
+        st.write("- Reduce intake of high-cholesterol foods.")
+    if ap_hi > 130:
+        st.write("- Manage your blood pressure with diet and exercise.")
+    if smoke == 1:
+        st.write("- Quitting smoking can reduce your cardiovascular risk.")
+    if not active:
+        st.write("- Regular exercise can improve cardiovascular health.")
 
-# Footer
+    st.markdown("### Blood Pressure Visualization")
+    fig, ax = plt.subplots(figsize=(8, 5))  # Smaller figure size
+    ax.bar(["Systolic (ap_hi)", "Diastolic (ap_lo)"], [ap_hi, ap_lo], color=["red", "blue"])
+    ax.set_ylabel("Pressure (mmHg)")
+    ax.set_title("Blood Pressure")
+    st.pyplot(fig)
+
 st.markdown("""
     <footer style="text-align:center; margin-top:50px;">
         <p>Created by Hans Santoso</p>
         <p><a href="https://www.linkedin.com/in/hans-santoso/" target="_blank">Connect with me on LinkedIn</a></p>
     </footer>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html=True)   
